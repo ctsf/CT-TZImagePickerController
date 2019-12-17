@@ -47,7 +47,7 @@
 @end
 
 static CGSize AssetGridThumbnailSize;
-static CGFloat itemMargin = 5;
+static CGFloat defaultItemMargin = 5;
 
 @implementation TZPhotoPickerController
 
@@ -169,7 +169,7 @@ static CGFloat itemMargin = 5;
     _collectionView.dataSource = self;
     _collectionView.delegate = self;
     _collectionView.alwaysBounceHorizontal = NO;
-    _collectionView.contentInset = UIEdgeInsetsMake(itemMargin, itemMargin, itemMargin, itemMargin);
+    _collectionView.contentInset = UIEdgeInsetsMake([self getItemMargin], [self getItemMargin], [self getItemMargin], [self getItemMargin]);
     
     if (_showTakePhotoBtn) {
         _collectionView.contentSize = CGSizeMake(self.view.tz_width, ((_model.count + self.columnNumber) / self.columnNumber) * self.view.tz_width);
@@ -314,10 +314,10 @@ static CGFloat itemMargin = 5;
     }
     _collectionView.frame = CGRectMake(0, top, self.view.tz_width, collectionViewHeight);
     _noDataLabel.frame = _collectionView.bounds;
-    CGFloat itemWH = (self.view.tz_width - (self.columnNumber + 1) * itemMargin) / self.columnNumber;
+    CGFloat itemWH = (self.view.tz_width - (self.columnNumber + 1) * [self getItemMargin]) / self.columnNumber;
     _layout.itemSize = CGSizeMake(itemWH, itemWH);
-    _layout.minimumInteritemSpacing = itemMargin;
-    _layout.minimumLineSpacing = itemMargin;
+    _layout.minimumInteritemSpacing = [self getItemMargin];
+    _layout.minimumLineSpacing = [self getItemMargin];
     [_collectionView setCollectionViewLayout:_layout];
     if (_offsetItemCount > 0) {
         CGFloat offsetY = _offsetItemCount * (_layout.itemSize.height + _layout.minimumLineSpacing);
@@ -529,7 +529,7 @@ static CGFloat itemMargin = 5;
     cell.allowPickingGif = tzImagePickerVc.allowPickingGif;
     cell.model = model;
     if (model.isSelected && tzImagePickerVc.showSelectedIndex) {
-        cell.index = [tzImagePickerVc.selectedAssetIds indexOfObject:model.asset.localIdentifier] + 1;
+        cell.index = [tzImagePickerVc.selectedAssetIds indexOfObject:model.localIdentifier] + 1;
     }
     cell.showSelectBtn = tzImagePickerVc.showSelectBtn;
     cell.allowPreview = tzImagePickerVc.allowPreview;
@@ -555,7 +555,7 @@ static CGFloat itemMargin = 5;
             model.isSelected = NO;
             NSArray *selectedModels = [NSArray arrayWithArray:tzImagePickerVc.selectedModels];
             for (TZAssetModel *model_item in selectedModels) {
-                if ([model.asset.localIdentifier isEqualToString:model_item.asset.localIdentifier]) {
+                if ([model.localIdentifier isEqualToString:model_item.localIdentifier]) {
                     [tzImagePickerVc removeSelectedModel:model_item];
                     break;
                 }
@@ -795,6 +795,11 @@ static CGFloat itemMargin = 5;
     }
 }
 
+- (CGFloat)getItemMargin {
+    TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
+    return tzImagePickerVc.itemMargin ? : defaultItemMargin;
+}
+
 #pragma mark - UIAlertViewDelegate
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
@@ -814,12 +819,16 @@ static CGFloat itemMargin = 5;
         UIImage *photo = [info objectForKey:UIImagePickerControllerOriginalImage];
         NSDictionary *meta = [info objectForKey:UIImagePickerControllerMediaMetadata];
         if (photo) {
-            [[TZImageManager manager] savePhotoWithImage:photo meta:meta location:self.location completion:^(PHAsset *asset, NSError *error){
-                if (!error) {
-                    [self addPHAsset:asset];
-                }
-            }];
-            self.location = nil;
+            if (!imagePickerVc.allowSaveImage) {
+                [self addImage:photo];
+            } else {
+                [[TZImageManager manager] savePhotoWithImage:photo meta:meta location:self.location completion:^(PHAsset *asset, NSError *error){
+                    if (!error) {
+                        [self addPHAsset:asset];
+                    }
+                }];
+                self.location = nil;
+            }
         }
     } else if ([type isEqualToString:@"public.movie"]) {
         TZImagePickerController *imagePickerVc = (TZImagePickerController *)self.navigationController;
@@ -834,6 +843,26 @@ static CGFloat itemMargin = 5;
             self.location = nil;
         }
     }
+}
+
+- (void)addImage:(UIImage *)image {
+    TZAssetModel *imageModel = [TZAssetModel modelWithImage:image type:TZAssetModelMediaTypePhoto];
+    
+    TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
+    [tzImagePickerVc hideProgressHUD];
+    if (tzImagePickerVc.sortAscendingByModificationDate) {
+        [_models addObject:imageModel];
+    } else {
+        [_models insertObject:imageModel atIndex:0];
+    }
+    imageModel.isSelected = YES;
+    [tzImagePickerVc addSelectedModel:imageModel];
+    [self refreshBottomToolBarStatus];
+    
+    _collectionView.hidden = YES;
+    [_collectionView reloadData];
+    _shouldScrollToBottom = YES;
+    [self scrollCollectionViewToBottom];
 }
 
 - (void)addPHAsset:(PHAsset *)asset {

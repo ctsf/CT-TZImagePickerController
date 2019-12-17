@@ -273,6 +273,7 @@
     self.statusBarStyle = UIStatusBarStyleLightContent;
     self.cannotSelectLayerColor = [[UIColor whiteColor] colorWithAlphaComponent:0.8];
     self.allowCameraLocation = YES;
+    self.allowSaveImage = YES;
     
     self.iconThemeColor = [UIColor colorWithRed:31 / 255.0 green:185 / 255.0 blue:34 / 255.0 alpha:1.0];
     [self configDefaultBtnTitle];
@@ -558,6 +559,21 @@
     [TZImageManager manager].photoPreviewMaxWidth = _photoPreviewMaxWidth;
 }
 
+- (void)setPhotoCornerRadius:(CGFloat)photoCornerRadius {
+    _photoCornerRadius = photoCornerRadius;
+    [TZImagePickerConfig sharedInstance].photoCornerRadius = photoCornerRadius ? : 0;
+}
+
+- (void)setItemMargin:(CGFloat)itemMargin {
+    _itemMargin = itemMargin;
+    [TZImagePickerConfig sharedInstance].itemMargin = itemMargin;
+}
+
+- (void)setPhotoAngleRotation:(CGFloat)photoAngleRotation {
+    _photoAngleRotation = photoAngleRotation;
+    [TZImagePickerConfig sharedInstance].photoAngleRotation = photoAngleRotation ? : 0;
+}
+
 - (void)setPhotoWidth:(CGFloat)photoWidth {
     _photoWidth = photoWidth;
     [TZImageManager manager].photoWidth = photoWidth;
@@ -579,6 +595,14 @@
     [TZImagePickerConfig sharedInstance].allowPickingImage = allowPickingImage;
     if (!allowPickingImage) {
         _allowTakePicture = NO;
+    }
+}
+
+- (void)setAllowSaveImage:(BOOL)allowSaveImage {
+    _allowSaveImage = allowSaveImage;
+    [TZImagePickerConfig sharedInstance].allowSaveImage = allowSaveImage;
+    if (!allowSaveImage) {
+        _allowSaveImage = NO;
     }
 }
 
@@ -622,12 +646,12 @@
 
 - (void)addSelectedModel:(TZAssetModel *)model {
     [_selectedModels addObject:model];
-    [_selectedAssetIds addObject:model.asset.localIdentifier];
+    [_selectedAssetIds addObject:model.localIdentifier];
 }
 
 - (void)removeSelectedModel:(TZAssetModel *)model {
     [_selectedModels removeObject:model];
-    [_selectedAssetIds removeObject:model.asset.localIdentifier];
+    [_selectedAssetIds removeObject:model.localIdentifier];
 }
 
 - (UIImage *)createImageWithColor:(UIColor *)color size:(CGSize)size radius:(CGFloat)radius {

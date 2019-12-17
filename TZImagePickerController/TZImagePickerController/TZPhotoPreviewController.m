@@ -320,7 +320,7 @@
     } else {
         NSArray *selectedModels = [NSArray arrayWithArray:_tzImagePickerVc.selectedModels];
         for (TZAssetModel *model_item in selectedModels) {
-            if ([model.asset.localIdentifier isEqualToString:model_item.asset.localIdentifier]) {
+            if ([model.localIdentifier isEqualToString:model_item.localIdentifier]) {
                 // 1.6.7版本更新:防止有多个一样的model,一次性被移除了
                 NSArray *selectedModelsTmp = [NSArray arrayWithArray:_tzImagePickerVc.selectedModels];
                 for (NSInteger i = 0; i < selectedModelsTmp.count; i++) {
@@ -526,7 +526,7 @@
     _selectButton.selected = model.isSelected;
     [self refreshSelectButtonImageViewContentMode];
     if (_selectButton.isSelected && _tzImagePickerVc.showSelectedIndex && _tzImagePickerVc.showSelectBtn) {
-        NSString *index = [NSString stringWithFormat:@"%d", (int)([_tzImagePickerVc.selectedAssetIds indexOfObject:model.asset.localIdentifier] + 1)];
+        NSString *index = [NSString stringWithFormat:@"%d", (int)([_tzImagePickerVc.selectedAssetIds indexOfObject:model.localIdentifier] + 1)];
         _indexLabel.text = index;
         _indexLabel.hidden = NO;
     } else {

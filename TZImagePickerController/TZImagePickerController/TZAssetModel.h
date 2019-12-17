@@ -21,6 +21,7 @@ typedef enum : NSUInteger {
 @interface TZAssetModel : NSObject
 
 @property (nonatomic, strong) PHAsset *asset;
+@property (nonatomic, strong) NSString *localIdentifier; 
 @property (nonatomic, assign) BOOL isSelected;      ///< The select status of a photo, default is No
 @property (nonatomic, assign) TZAssetModelMediaType type;
 @property (nonatomic, copy) NSString *timeLength;
@@ -29,6 +30,7 @@ typedef enum : NSUInteger {
 /// 用一个PHAsset实例，初始化一个照片模型
 + (instancetype)modelWithAsset:(PHAsset *)asset type:(TZAssetModelMediaType)type;
 + (instancetype)modelWithAsset:(PHAsset *)asset type:(TZAssetModelMediaType)type timeLength:(NSString *)timeLength;
++ (instancetype)modelWithImage:(UIImage *)asset type:(TZAssetModelMediaType)type;
 
 @end
 

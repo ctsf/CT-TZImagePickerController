@@ -36,25 +36,30 @@
 
 - (void)setModel:(TZAssetModel *)model {
     _model = model;
-    self.representedAssetIdentifier = model.asset.localIdentifier;
-    int32_t imageRequestID = [[TZImageManager manager] getPhotoWithAsset:model.asset photoWidth:self.tz_width completion:^(UIImage *photo, NSDictionary *info, BOOL isDegraded) {
-        // Set the cell's thumbnail image if it's still showing the same asset.
-        if ([self.representedAssetIdentifier isEqualToString:model.asset.localIdentifier]) {
-            self.imageView.image = photo;
-        } else {
-            // NSLog(@"this cell is showing other asset");
+    self.representedAssetIdentifier = model.localIdentifier;
+    
+    if ([model.asset isKindOfClass:UIImage.self] && [self.representedAssetIdentifier isEqualToString:model.localIdentifier]) {
+        self.imageView.image = model.asset;
+    } else {
+        int32_t imageRequestID = [[TZImageManager manager] getPhotoWithAsset:model.asset photoWidth:self.tz_width completion:^(UIImage *photo, NSDictionary *info, BOOL isDegraded) {
+            // Set the cell's thumbnail image if it's still showing the same asset.
+            if ([self.representedAssetIdentifier isEqualToString:model.localIdentifier]) {
+                self.imageView.image = photo;
+            } else {
+                // NSLog(@"this cell is showing other asset");
+                [[PHImageManager defaultManager] cancelImageRequest:self.imageRequestID];
+            }
+            if (!isDegraded) {
+                [self hideProgressView];
+                self.imageRequestID = 0;
+            }
+        } progressHandler:nil networkAccessAllowed:NO];
+        if (imageRequestID && self.imageRequestID && imageRequestID != self.imageRequestID) {
             [[PHImageManager defaultManager] cancelImageRequest:self.imageRequestID];
+            // NSLog(@"cancelImageRequest %d",self.imageRequestID);
         }
-        if (!isDegraded) {
-            [self hideProgressView];
-            self.imageRequestID = 0;
-        }
-    } progressHandler:nil networkAccessAllowed:NO];
-    if (imageRequestID && self.imageRequestID && imageRequestID != self.imageRequestID) {
-        [[PHImageManager defaultManager] cancelImageRequest:self.imageRequestID];
-        // NSLog(@"cancelImageRequest %d",self.imageRequestID);
+        self.imageRequestID = imageRequestID;
     }
-    self.imageRequestID = imageRequestID;
     self.selectPhotoButton.selected = model.isSelected;
     self.selectImageView.image = self.selectPhotoButton.isSelected ? self.photoSelImage : self.photoDefImage;
     self.indexLabel.hidden = !self.selectPhotoButton.isSelected;
@@ -69,8 +74,10 @@
     }
     // 如果用户选中了该图片，提前获取一下大图
     if (model.isSelected) {
+        [self.layer addSublayer:[self configuredShapeLayer]];
         [self requestBigImage];
     } else {
+        [self removeConfiguredSublayer];
         [self cancelBigImageRequest];
     }
     [self setNeedsLayout];
@@ -140,10 +147,14 @@
     }
     self.selectImageView.image = sender.isSelected ? self.photoSelImage : self.photoDefImage;
     if (sender.isSelected) {
+        [self.layer addSublayer:[self configuredShapeLayer]];
+        self.transform = [self rotateImageOnAngle:[TZImagePickerConfig sharedInstance].photoAngleRotation];
         [UIView showOscillatoryAnimationWithLayer:_selectImageView.layer type:TZOscillatoryAnimationToBigger];
         // 用户选中了该图片，提前获取一下大图
         [self requestBigImage];
     } else { // 取消选中，取消大图的获取
+        [self removeConfiguredSublayer];
+        self.transform = [self rotateImageOnAngle:0.f];
         [self cancelBigImageRequest];
     }
 }
@@ -167,24 +178,28 @@
         [[PHImageManager defaultManager] cancelImageRequest:_bigImageRequestID];
     }
     
-    _bigImageRequestID = [[TZImageManager manager] requestImageDataForAsset:_model.asset completion:^(NSData *imageData, NSString *dataUTI, UIImageOrientation orientation, NSDictionary *info) {
-        [self hideProgressView];
-    } progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
-        if (self.model.isSelected) {
-            progress = progress > 0.02 ? progress : 0.02;;
-            self.progressView.progress = progress;
-            self.progressView.hidden = NO;
-            self.imageView.alpha = 0.4;
-            if (progress >= 1) {
-                [self hideProgressView];
+    if (![_model.asset isKindOfClass:UIImage.self]) {
+        _bigImageRequestID = [[TZImageManager manager] requestImageDataForAsset:_model.asset completion:^(NSData *imageData, NSString *dataUTI, UIImageOrientation orientation, NSDictionary *info) {
+            [self hideProgressView];
+        } progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
+            if (self.model.isSelected) {
+                progress = progress > 0.02 ? progress : 0.02;;
+                self.progressView.progress = progress;
+                self.progressView.hidden = NO;
+                self.imageView.alpha = 0.4;
+                if (progress >= 1) {
+                    [self hideProgressView];
+                }
+            } else {
+                // 快速连续点几次，会EXC_BAD_ACCESS...
+                // *stop = YES;
+                [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+                [self cancelBigImageRequest];
             }
-        } else {
-            // 快速连续点几次，会EXC_BAD_ACCESS...
-            // *stop = YES;
-            [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-            [self cancelBigImageRequest];
-        }
-    }];
+        }];
+    } else {
+        [self hideProgressView];
+    }
 }
 
 - (void)cancelBigImageRequest {
@@ -199,7 +214,7 @@
 - (void)reload:(NSNotification *)noti {
     TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)noti.object;
     if (self.model.isSelected && tzImagePickerVc.showSelectedIndex) {
-        self.index = [tzImagePickerVc.selectedAssetIds indexOfObject:self.model.asset.localIdentifier] + 1;
+        self.index = [tzImagePickerVc.selectedAssetIds indexOfObject:self.model.localIdentifier] + 1;
     }
     self.indexLabel.hidden = !self.selectPhotoButton.isSelected;
     if (tzImagePickerVc.selectedModels.count >= tzImagePickerVc.maxImagesCount && tzImagePickerVc.showPhotoCannotSelectLayer && !self.model.isSelected) {
@@ -313,20 +328,31 @@
 
 - (void)layoutSubviews {
     [super layoutSubviews];
+    _imageView.layer.cornerRadius = [[TZImagePickerConfig sharedInstance] photoCornerRadius];
+    
+    if (self.model.isSelected) {
+        [self removeConfiguredSublayer];
+        [self.layer addSublayer:[self configuredShapeLayer]];
+        self.transform = [self rotateImageOnAngle:[TZImagePickerConfig sharedInstance].photoAngleRotation];
+    } else {
+        [self removeConfiguredSublayer];
+        self.transform = [self rotateImageOnAngle:0.f];
+    }
+    
     _cannotSelectLayerButton.frame = self.bounds;
     if (self.allowPreview) {
-        _selectPhotoButton.frame = CGRectMake(self.tz_width - 44, 0, 44, 44);
+        _selectPhotoButton.frame = CGRectMake(self.bounds.size.width - 44, 0, 44, 44);
     } else {
         _selectPhotoButton.frame = self.bounds;
     }
-    _selectImageView.frame = CGRectMake(self.tz_width - 27, 3, 24, 24);
+    _selectImageView.frame = CGRectMake(self.bounds.size.width - 27, 3, 24, 24);
     if (_selectImageView.image.size.width <= 27) {
         _selectImageView.contentMode = UIViewContentModeCenter;
     } else {
         _selectImageView.contentMode = UIViewContentModeScaleAspectFit;
     }
     _indexLabel.frame = _selectImageView.frame;
-    _imageView.frame = CGRectMake(0, 0, self.tz_width, self.tz_height);
+    _imageView.frame = CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height);
     
     static CGFloat progressWH = 20;
     CGFloat progressXY = (self.tz_width - progressWH) / 2;
@@ -352,6 +378,41 @@
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+#pragma mark - Private helpers -
+
+- (CGAffineTransform)rotateImageOnAngle:(CGFloat)angle {
+    if (angle == 0) {
+        return CGAffineTransformMakeRotation(0);
+    }
+    return CGAffineTransformMakeRotation((angle * M_PI) / 180.f);
+}
+
+- (CAShapeLayer *)configuredShapeLayer {
+    BOOL dashPattern = ![TZImagePickerConfig sharedInstance].allowSaveImage;
+    
+    CAShapeLayer *yourViewBorder = [CAShapeLayer layer];
+    yourViewBorder.name = dashPattern ? @"dashed" : @"filled";
+    yourViewBorder.strokeColor = [UIColor blackColor].CGColor;
+    yourViewBorder.fillColor = nil;
+    yourViewBorder.lineWidth = 2.0;
+    yourViewBorder.frame = self.bounds;
+    yourViewBorder.path = [UIBezierPath bezierPathWithRoundedRect:self.bounds cornerRadius:[TZImagePickerConfig sharedInstance].photoCornerRadius].CGPath;
+    
+    if (dashPattern && [self.model.asset isKindOfClass:UIImage.self]) {
+        yourViewBorder.lineDashPattern = @[@10, @5];
+    }
+    
+    return yourViewBorder;
+}
+
+- (void)removeConfiguredSublayer {
+    [[self.layer.sublayers copy] enumerateObjectsUsingBlock:^(CAShapeLayer * _Nonnull layer, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([layer.name isEqualToString:@"dashed"] || [layer.name isEqualToString:@"filled"]) {
+            layer.removeFromSuperlayer;
+        }
+    }];
 }
 
 @end
@@ -470,6 +531,7 @@
 - (void)layoutSubviews {
     [super layoutSubviews];
     _imageView.frame = self.bounds;
+    _imageView.layer.cornerRadius = [[TZImagePickerConfig sharedInstance] photoCornerRadius];
 }
 
 @end

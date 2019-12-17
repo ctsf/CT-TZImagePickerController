@@ -63,6 +63,15 @@
 /// Default is 600px / 默认600像素宽
 @property (nonatomic, assign) CGFloat photoPreviewMaxWidth;
 
+/// Corner radius of photo / image.
+@property (nonatomic, assign) CGFloat photoCornerRadius;
+
+/// Margin size of item.
+@property (nonatomic, assign) CGFloat itemMargin;
+
+/// Angle rotation of photo / image.
+@property (nonatomic, assign) CGFloat photoAngleRotation;
+
 /// Default is 15, While fetching photo, HUD will dismiss automatic if timeout;
 /// 超时时间，默认为15秒，当取图片时间超过15秒还没有取成功时，会自动dismiss HUD；
 @property (nonatomic, assign) NSInteger timeout;
@@ -89,6 +98,9 @@
 /// 默认为YES，如果设置为NO, 用户将不能拍摄照片
 @property (nonatomic, assign) BOOL allowTakePicture;
 @property (nonatomic, assign) BOOL allowCameraLocation;
+
+/// Default is YES, if set NO, user can't save the picture.
+@property (nonatomic, assign) BOOL allowSaveImage;
 
 /// Default is YES, if set NO, user can't take video.
 /// 默认为YES，如果设置为NO, 用户将不能拍摄视频
@@ -312,12 +324,16 @@
 + (instancetype)sharedInstance;
 @property (copy, nonatomic) NSString *preferredLanguage;
 @property(nonatomic, assign) BOOL allowPickingImage;
+@property (nonatomic, assign) BOOL allowSaveImage;
 @property (nonatomic, assign) BOOL allowPickingVideo;
 @property (strong, nonatomic) NSBundle *languageBundle;
 @property (assign, nonatomic) BOOL showSelectedIndex;
 @property (assign, nonatomic) BOOL showPhotoCannotSelectLayer;
 @property (assign, nonatomic) BOOL notScaleImage;
 @property (assign, nonatomic) BOOL needFixComposition;
+@property (nonatomic, assign) CGFloat photoCornerRadius;
+@property (nonatomic, assign) CGFloat itemMargin;
+@property (nonatomic, assign) CGFloat photoAngleRotation;
 
 /// 默认是50，如果一个GIF过大，里面图片个数可能超过1000，会导致内存飙升而崩溃
 @property (assign, nonatomic) NSInteger gifPreviewMaxImagesCount;

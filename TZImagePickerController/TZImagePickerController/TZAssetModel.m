@@ -14,6 +14,7 @@
 + (instancetype)modelWithAsset:(PHAsset *)asset type:(TZAssetModelMediaType)type{
     TZAssetModel *model = [[TZAssetModel alloc] init];
     model.asset = asset;
+    model.localIdentifier = asset.localIdentifier;
     model.isSelected = NO;
     model.type = type;
     return model;
@@ -21,7 +22,17 @@
 
 + (instancetype)modelWithAsset:(PHAsset *)asset type:(TZAssetModelMediaType)type timeLength:(NSString *)timeLength {
     TZAssetModel *model = [self modelWithAsset:asset type:type];
+    model.localIdentifier = asset.localIdentifier;
     model.timeLength = timeLength;
+    return model;
+}
+
++ (instancetype)modelWithImage:(UIImage *)asset type:(TZAssetModelMediaType)type {
+    TZAssetModel *model = [TZAssetModel new];
+    model.asset = (id)asset;
+    model.localIdentifier = [[NSUUID new] UUIDString];
+    model.isSelected = NO;
+    model.type = type;
     return model;
 }
 
