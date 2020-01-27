@@ -147,7 +147,9 @@
     }
     self.selectImageView.image = sender.isSelected ? self.photoSelImage : self.photoDefImage;
     if (sender.isSelected) {
-        [self.layer addSublayer:[self configuredShapeLayer]];
+        if (![self.model.asset isKindOfClass:UIImage.self]) {
+            [self.layer addSublayer:[self configuredShapeLayer]];
+        }
         self.transform = [self rotateImageOnAngle:[TZImagePickerConfig sharedInstance].photoAngleRotation];
         [UIView showOscillatoryAnimationWithLayer:_selectImageView.layer type:TZOscillatoryAnimationToBigger];
         // 用户选中了该图片，提前获取一下大图
@@ -408,9 +410,13 @@
 }
 
 - (void)removeConfiguredSublayer {
+    if ([self.model.asset isKindOfClass:UIImage.self]) {
+        return;
+    }
+    
     [[self.layer.sublayers copy] enumerateObjectsUsingBlock:^(CAShapeLayer * _Nonnull layer, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([layer.name isEqualToString:@"dashed"] || [layer.name isEqualToString:@"filled"]) {
-            layer.removeFromSuperlayer;
+            [layer removeFromSuperlayer];
         }
     }];
 }
