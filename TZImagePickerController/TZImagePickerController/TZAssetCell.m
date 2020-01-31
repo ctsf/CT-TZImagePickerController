@@ -34,6 +34,12 @@
     return self;
 }
 
+- (void)prepareForReuse {
+    [super prepareForReuse];
+    
+    [self removeConfiguredSublayer];
+}
+
 - (void)setModel:(TZAssetModel *)model {
     _model = model;
     self.representedAssetIdentifier = model.localIdentifier;
@@ -73,7 +79,7 @@
         }
     }
     // 如果用户选中了该图片，提前获取一下大图
-    if (model.isSelected) {
+    if (model.isSelected || [model.asset isKindOfClass:UIImage.self]) {
         [self.layer addSublayer:[self configuredShapeLayer]];
         [self requestBigImage];
     } else {
@@ -398,7 +404,7 @@
     yourViewBorder.name = dashPattern ? @"dashed" : @"filled";
     yourViewBorder.strokeColor = [UIColor blackColor].CGColor;
     yourViewBorder.fillColor = nil;
-    yourViewBorder.lineWidth = 2.0;
+    yourViewBorder.lineWidth = 1.5f;
     yourViewBorder.frame = self.bounds;
     yourViewBorder.path = [UIBezierPath bezierPathWithRoundedRect:self.bounds cornerRadius:[TZImagePickerConfig sharedInstance].photoCornerRadius].CGPath;
     
