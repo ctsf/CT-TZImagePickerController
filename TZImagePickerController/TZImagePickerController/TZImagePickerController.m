@@ -551,11 +551,6 @@
 
 - (void)setPhotoPreviewMaxWidth:(CGFloat)photoPreviewMaxWidth {
     _photoPreviewMaxWidth = photoPreviewMaxWidth;
-    if (photoPreviewMaxWidth > 800) {
-        _photoPreviewMaxWidth = 800;
-    } else if (photoPreviewMaxWidth < 500) {
-        _photoPreviewMaxWidth = 500;
-    }
     [TZImageManager manager].photoPreviewMaxWidth = _photoPreviewMaxWidth;
 }
 
