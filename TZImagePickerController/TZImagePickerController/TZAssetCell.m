@@ -578,18 +578,39 @@
     if (self) {
         self.backgroundColor = [UIColor whiteColor];
         _imageView = [[UIImageView alloc] init];
-        _imageView.backgroundColor = [UIColor colorWithWhite:1.000 alpha:0.500];
         _imageView.contentMode = UIViewContentModeScaleAspectFill;
-        [self.contentView addSubview:_imageView];
         self.clipsToBounds = YES;
+        _takePhotoLabel = [[UILabel alloc] init];
+        _takePhotoLabel.textAlignment = NSTextAlignmentCenter;
+        _takePhotoLabel.text = @"Take a photo";
+        _takePhotoLabel.font = [UIFont systemFontOfSize:13];
+        _takePhotoLabel.textColor = [UIColor grayColor];
+        [self setConstraints];
     }
     return self;
 }
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    _imageView.frame = self.bounds;
-    _imageView.layer.cornerRadius = [[TZImagePickerConfig sharedInstance] photoCornerRadius];
+    self.contentView.layer.cornerRadius = [[TZImagePickerConfig sharedInstance] photoCornerRadius];
+}
+
+- (void)setConstraints {
+    _imageView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.contentView addSubview:_imageView];
+    
+    [_imageView.widthAnchor constraintEqualToConstant:40].active = YES;
+    [_imageView.heightAnchor constraintEqualToConstant:40].active = YES;
+    [_imageView.centerXAnchor constraintEqualToAnchor:self.contentView.centerXAnchor].active = YES;
+    [_imageView.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor constant:-10].active = YES;
+    
+    _takePhotoLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.contentView addSubview:_takePhotoLabel];
+    
+    [_takePhotoLabel.widthAnchor constraintEqualToConstant:140].active = YES;
+    [_takePhotoLabel.heightAnchor constraintEqualToConstant:40].active = YES;
+    [_takePhotoLabel.centerXAnchor constraintEqualToAnchor:self.contentView.centerXAnchor].active = YES;
+    [_takePhotoLabel.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor constant:22].active = YES;
 }
 
 @end
