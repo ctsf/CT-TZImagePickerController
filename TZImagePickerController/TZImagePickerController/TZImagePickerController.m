@@ -1059,6 +1059,9 @@
 + (BOOL)isAssetNotSelectable:(TZAssetModel *)model tzImagePickerVc:(TZImagePickerController *)tzImagePickerVc {
     BOOL notSelectable = tzImagePickerVc.selectedModels.count >= tzImagePickerVc.maxImagesCount;
     if (tzImagePickerVc.selectedModels && tzImagePickerVc.selectedModels.count > 0 && !tzImagePickerVc.allowPickingMultipleVideo) {
+        if (model.type == TZAssetModelMediaTypePhoto) { // `TZAssetModelMediaTypePhoto` mutually exclusive to `PHAssetMediaTypeVideo`
+            return notSelectable;
+        }
         if (model.asset.mediaType == PHAssetMediaTypeVideo) {
             notSelectable = true;
         }
