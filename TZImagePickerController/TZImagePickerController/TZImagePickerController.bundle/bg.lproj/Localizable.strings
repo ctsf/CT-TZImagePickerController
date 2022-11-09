@@ -18,3 +18,4 @@
 "Can not choose both video and photo" = "Не можете да изберете видео и снимка";
 "Can not choose both photo and GIF" = "Не може да се избере снимка и GIF";
 "Selected for %ld seconds" = "Избрано за %ld секунди";
+"TZAssetCameraCell.TakePhoto" = "Take a photo";

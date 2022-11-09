@@ -582,7 +582,7 @@
         self.clipsToBounds = YES;
         _takePhotoLabel = [[UILabel alloc] init];
         _takePhotoLabel.textAlignment = NSTextAlignmentCenter;
-        _takePhotoLabel.text = @"Take a photo";
+        _takePhotoLabel.text = [NSBundle tz_localizedStringForKey:@"TZAssetCameraCell.TakePhoto"];
         _takePhotoLabel.font = [UIFont systemFontOfSize:13];
         _takePhotoLabel.textColor = [UIColor grayColor];
         [self setConstraints];
