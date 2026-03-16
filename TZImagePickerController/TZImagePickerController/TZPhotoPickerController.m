@@ -108,7 +108,10 @@ static CGFloat defaultItemMargin = 5;
     _showTakePhotoBtn = _model.isCameraRoll && ((tzImagePickerVc.allowTakePicture && tzImagePickerVc.allowPickingImage) || (tzImagePickerVc.allowTakeVideo && tzImagePickerVc.allowPickingVideo));
     // [self resetCachedAssets];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangeStatusBarOrientationNotification:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
-    
+    if (@available(iOS 26, *)) {
+        self.navigationItem.leftBarButtonItem.hidesSharedBackground = YES;
+        self.navigationItem.rightBarButtonItem.hidesSharedBackground = YES;
+    }
     self.operationQueue = [[NSOperationQueue alloc] init];
     self.operationQueue.maxConcurrentOperationCount = 3;
 }

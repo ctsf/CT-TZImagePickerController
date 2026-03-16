@@ -785,6 +785,9 @@
     UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithTitle:imagePickerVc.cancelBtnTitleStr style:UIBarButtonItemStylePlain target:imagePickerVc action:@selector(cancelButtonClick)];
     [TZCommonTools configBarButtonItem:cancelItem tzImagePickerVc:imagePickerVc];
     self.navigationItem.rightBarButtonItem = cancelItem;
+    if (@available(iOS 26, *)) {
+        self.navigationItem.rightBarButtonItem.hidesSharedBackground = YES;
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -798,7 +801,10 @@
     }
     
     if (self.isFirstAppear && !imagePickerVc.navLeftBarButtonSettingBlock) {
-        self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:[NSBundle tz_localizedStringForKey:@"Back"] style:UIBarButtonItemStylePlain target:nil action:nil];
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:[NSBundle tz_localizedStringForKey:@"Back"] style:UIBarButtonItemStylePlain target:nil action:nil];
+        if (@available(iOS 26, *)) {
+            self.navigationItem.leftBarButtonItem.hidesSharedBackground = YES;
+        }
     }
     
     [self configTableView];
